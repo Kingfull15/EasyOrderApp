@@ -1,0 +1,65 @@
+﻿@model List<OrderItem>
+@{
+    ViewData["Title"] = "Your Order - Table " + ViewBag.TableNumber;
+}
+
+<div class="container">
+    <h2>Your Current Order - Table @ViewBag.TableNumber</h2>
+
+    @if (Model.Any())
+    {
+        <div class="card">
+            <div class="card-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                            <th>Subtotal</th>
+                            <th>Delete</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.MenuItemName</td>
+                                <td>@item.Price.ToString("F2") Денари </td>
+                                <td>@item.Quantity</td>
+                                <td>@item.SubTotal.ToString("F2") Денари </td>
+                                <td>
+                                    <form asp-action="DeleteOrderItem" method="post" style="display:inline">
+                                        <input type="hidden" name="menuItemId" value="@item.MenuItemId" />
+                                        <button type="submit">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-success">
+                            <th colspan="3">Total:</th>
+                            <th>@Model.Sum(item => item.SubTotal).ToString("F2") Денари</th>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <div class="text-center mt-3">
+                    <form asp-action="SubmitOrder" method="post" class="d-inline">
+                        <button type="submit" class="btn btn-success btn-lg">Submit Order</button>
+                    </form>
+                    <a asp-action="Index" class="btn btn-secondary btn-lg ml-2">Continue Ordering</a>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info text-center">
+            <h4>Your order is empty</h4>
+            <p>Add some items from our menu to get started!</p>
+            <a asp-action="Index" class="btn btn-primary">View Menu</a>
+        </div>
+    }
+</div>
