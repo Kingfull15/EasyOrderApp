@@ -1,0 +1,47 @@
+﻿@{
+    ViewData["Title"] = "Select Table";
+}
+
+<div class="dashboard-page table-selector-page py-4">
+    <div class="dashboard-hero mb-4">
+        <h1 class="mb-1">Find Table Orders</h1>
+        <p class="mb-0">Choose a table to quickly view all orders placed for it.</p>
+    </div>
+
+    <div class="card table-selector-card mb-4">
+        <div class="card-header dashboard-orders-header">
+            <h4 class="mb-0">Enter Table Number</h4>
+        </div>
+        <div class="card-body">
+            @if (TempData["TableSelectError"] is string errorMessage)
+            {
+                <div class="alert dashboard-empty-alert mb-3">@errorMessage</div>
+            }
+
+            <form asp-controller="Dashboard" asp-action="SelectTable" method="post" class="d-flex align-items-center" style="gap: 10px; flex-wrap: wrap;">
+                <input type="number" name="tableNumber" min="1" value="1" class="form-control selector-input" />
+                <button type="submit" class="btn status-action-btn">View Orders</button>
+                <a asp-controller="Dashboard" asp-action="Index" class="btn continue-order-btn">Back to Dashboard</a>
+            </form>
+        </div>
+    </div>
+
+    <div class="card table-selector-card">
+        <div class="card-header dashboard-orders-header">
+            <h4 class="mb-0">Quick Pick</h4>
+        </div>
+        <div class="card-body">
+            <div class="quick-table-grid">
+                @for (var table = 1; table <= 12; table++)
+                {
+                    <form asp-controller="Dashboard" asp-action="SelectTable" method="post" class="d-inline">
+                        <input type="hidden" name="tableNumber" value="@table" />
+                        <button type="submit" class="btn table-link-btn quick-table-btn">Table @table</button>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+

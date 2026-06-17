@@ -1,0 +1,136 @@
+﻿@model List<Order>
+@{
+    ViewData["Title"] = "Table " + ViewBag.TableNumber + " Orders";
+}
+
+<div class="dashboard-page py-4">
+    <div class="dashboard-hero mb-4">
+        <h1 class="mb-1">Table @ViewBag.TableNumber Orders</h1>
+        <p class="mb-0">Live dashboard for the selected table with current order status and totals.</p>
+    </div>
+
+    <div id="newOrdersAlert" class="alert new-order-alert d-none" role="status" aria-live="polite"></div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-6 col-lg-3">
+            <div class="stat-card pending">
+                <div class="stat-value">@Model.Count</div>
+                <div class="stat-label">Orders on Table</div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="stat-card preparing">
+                <div class="stat-value">@Model.Count(o => o.Status == "Pending")</div>
+                <div class="stat-label">Pending</div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="stat-card completed">
+                <div class="stat-value">@Model.Count(o => o.Status == "Preparing")</div>
+                <div class="stat-label">Preparing</div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="stat-card sales">
+                <div class="stat-value">@Model.Sum(o => o.TotalAmount).ToString("F2")</div>
+                <div class="stat-label">Total (Денари)</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex mb-3" style="gap: 10px; flex-wrap: wrap;">
+        <a asp-controller="Dashboard" asp-action="SelectTable" class="btn continue-order-btn">Select Another Table</a>
+        <a asp-controller="Dashboard" asp-action="SelectTable" class="btn continue-order-btn">Go to Selection</a>
+        <a asp-controller="SecretQr" asp-action="Index" asp-route-tableNumber="@ViewBag.TableNumber" class="btn status-action-btn" target="_blank" rel="noopener noreferrer">Show QR Code</a>
+    </div>
+
+    <div class="card dashboard-orders-card">
+        <div class="card-header dashboard-orders-header d-flex justify-content-between align-items-center">
+            <h3 class="mb-0">Orders for Table @ViewBag.TableNumber</h3>
+            <span class="orders-count-pill">@Model.Count order(s)</span>
+        </div>
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover dashboard-table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Order #</th>
+                                <th>Time</th>
+                                <th>Items</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var order in Model)
+                            {
+                                <tr class="table-order-row" data-order-id="@order.OrderId">
+                                    <td><strong class="order-id">#@order.OrderId</strong></td>
+                                    <td>@order.OrderTime.ToString("HH:mm")</td>
+                                    <td>
+                                        <ul class="list-unstyled mb-0 order-items-list">
+                                            @foreach (var item in order.Items)
+                                            {
+                                                <li><small>@item.Quantity x @item.MenuItemName</small></li>
+                                            }
+                                        </ul>
+                                    </td>
+                                    <td><strong class="order-total">@order.TotalAmount.ToString("F2") Денари</strong></td>
+                                    <td>
+                                        <span class="status-pill @(order.Status == "Pending" ? "status-pending" : order.Status == "Preparing" ? "status-preparing" : "status-completed")">
+                                            @order.Status
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="alert dashboard-empty-alert text-center mb-0">
+                    <h4 class="mb-1">No orders for this table yet</h4>
+                    <p class="mb-0">Try another table or wait for new orders.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const tableNumber = '@ViewBag.TableNumber';
+        const storageKey = `tableview_seen_orders_${tableNumber}`;
+        const rows = Array.from(document.querySelectorAll('.table-order-row'));
+        const currentIds = rows
+            .map(row => parseInt(row.getAttribute('data-order-id'), 10))
+            .filter(Number.isFinite);
+
+        const savedIds = JSON.parse(localStorage.getItem(storageKey) || '[]');
+        const hasPreviousSnapshot = Array.isArray(savedIds) && savedIds.length > 0;
+        const newIds = hasPreviousSnapshot
+            ? currentIds.filter(id => !savedIds.includes(id))
+            : [];
+
+        if (newIds.length > 0) {
+            const alertBox = document.getElementById('newOrdersAlert');
+            if (alertBox) {
+                alertBox.textContent = `${newIds.length} new order(s) arrived for Table ${tableNumber}.`;
+                alertBox.classList.remove('d-none');
+            }
+
+            rows.forEach(row => {
+                const id = parseInt(row.getAttribute('data-order-id'), 10);
+                if (newIds.includes(id)) {
+                    row.classList.add('new-order-row');
+                }
+            });
+        }
+
+        localStorage.setItem(storageKey, JSON.stringify(currentIds));
+    })();
+</script>
+
