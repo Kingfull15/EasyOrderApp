@@ -2,15 +2,13 @@
     ViewData["Title"] = "Order Confirmed";
 }
 
-<div class="container text-center">
-    <div class="card mx-auto" style="max-width: 500px;">
-        <div class="card-body">
-            <div class="alert alert-success">
-                <h1><i class="fas fa-check-circle"></i></h1>
-                <h2>Order Confirmed!</h2>
-                <p>Thank you for your order. Your food will be prepared shortly.</p>
-                <a asp-action="Index" class="btn btn-primary">Order More Items</a>
+<div class="container order-confirmed-page py-5 text-center">
+    <div class="card confirmation-card mx-auto" style="max-width: 560px;">
+        <div class="card-body p-4 p-md-5">
+            <div class="confirmation-icon">&#10003;</div>
+            <h2 class="confirmation-title">Order Confirmed!</h2>
+            <p class="confirmation-message">Thank you for your order. Your food will be prepared shortly.</p>
+            <a asp-controller="Menu" asp-action="Index" asp-route-table="@ViewBag.TableNumber" class="btn continue-order-btn btn-lg">Order More Items - Table @ViewBag.TableNumber</a>
             </div>
-        </div>
     </div>
 </div>

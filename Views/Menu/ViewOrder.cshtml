@@ -3,63 +3,68 @@
     ViewData["Title"] = "Your Order - Table " + ViewBag.TableNumber;
 }
 
-<div class="container">
-    <h2>Your Current Order - Table @ViewBag.TableNumber</h2>
+<div class="container order-page py-4">
+    <div class="order-hero mb-4">
+        <h2 class="mb-1">Your Current Order</h2>
+        <p class="mb-0">Review items, adjust quantities, and submit when ready.</p>
+        <span class="table-pill">Table @ViewBag.TableNumber</span>
+    </div>
 
     @if (Model.Any())
     {
-        <div class="card">
+        <div class="card order-card">
             <div class="card-body">
-                <table class="table">
-                    <thead>
+                <table class="table order-table align-middle">
+                    <thead class="order-table-head">
                         <tr>
                             <th>Item</th>
                             <th>Price</th>
                             <th>Quantity</th>
                             <th>Subtotal</th>
-                            <th>Delete</th>
+                            <th>Remove Quantity</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var item in Model)
                         {
                             <tr>
-                                <td>@item.MenuItemName</td>
+                                <td class="order-item-name">@item.MenuItemName</td>
                                 <td>@item.Price.ToString("F2") Денари </td>
-                                <td>@item.Quantity</td>
-                                <td>@item.SubTotal.ToString("F2") Денари </td>
+                                <td><span class="quantity-badge">@item.Quantity</span></td>
+                                <td><strong class="order-subtotal">@item.SubTotal.ToString("F2") Денари</strong></td>
                                 <td>
-                                    <form asp-action="DeleteOrderItem" method="post" style="display:inline">
+                                    <form asp-action="DeleteOrderItem" asp-route-table="@ViewBag.TableNumber" method="post" class="d-flex align-items-center" style="gap: 8px; flex-wrap: nowrap;">
                                         <input type="hidden" name="menuItemId" value="@item.MenuItemId" />
-                                        <button type="submit">Delete</button>
+                                        <input type="number" name="quantityToRemove" value="1" min="1" max="@item.Quantity" class="form-control form-control-sm quantity-input" style="width: 80px;" />
+                                        <button type="submit" class="btn btn-sm remove-order-btn">Remove</button>
                                     </form>
                                 </td>
                             </tr>
                         }
                     </tbody>
                     <tfoot>
-                        <tr class="table-success">
+                        <tr class="order-total-row">
                             <th colspan="3">Total:</th>
-                            <th>@Model.Sum(item => item.SubTotal).ToString("F2") Денари</th>
+                            <th class="order-total-amount">@Model.Sum(item => item.SubTotal).ToString("F2") Денари</th>
                         </tr>
                     </tfoot>
                 </table>
 
                 <div class="text-center mt-3">
-                    <form asp-action="SubmitOrder" method="post" class="d-inline">
-                        <button type="submit" class="btn btn-success btn-lg">Submit Order</button>
+                    <form asp-action="SubmitOrder" asp-route-table="@ViewBag.TableNumber" method="post" class="d-inline">
+                        <button type="submit" class="btn btn-lg submit-order-btn">Submit Order - Table @ViewBag.TableNumber</button>
                     </form>
-                    <a asp-action="Index" class="btn btn-secondary btn-lg ml-2">Continue Ordering</a>
+                    <a asp-controller="Menu" asp-action="Index" asp-route-table="@ViewBag.TableNumber" class="btn btn-lg continue-order-btn ml-2">Continue Ordering - Table @ViewBag.TableNumber</a>
                 </div>
             </div>
         </div>
     }
     else
     {
-        <div class="alert alert-info text-center">
+        <div class="alert order-empty-alert text-center">
             <h4>Your order is empty</h4>
             <p>Add some items from our menu to get started!</p>
-            <a asp-action="Index" class="btn btn-primary">View Menu</a>
+            <a asp-controller="Menu" asp-action="Index" asp-route-table="@ViewBag.TableNumber" class="btn continue-order-btn">View Menu - Table @ViewBag.TableNumber</a>
         </div>
     }
 </div>

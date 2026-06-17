@@ -7,7 +7,16 @@ namespace RestaurantOrderingApp.Controllers
 {
     public class MenuController : Controller
     {
-        public IActionResult Index(int? table)
+        private readonly IDataService _dataService;
+
+        public MenuController(IDataService dataService)
+        {
+            _dataService = dataService;
+        }
+
+        [HttpGet("/Menu")]
+        [HttpGet("/Menu/Index")]
+        public async Task<IActionResult> Index(int? table)
         {
             if (table.HasValue)
             {
@@ -27,17 +36,17 @@ namespace RestaurantOrderingApp.Controllers
                 }
             }
 
-            var menuItems = DataService.GetMenuItems();
+            var menuItems = await _dataService.GetMenuItemsAsync();
             var groupedMenu = menuItems.GroupBy(item => item.Category).ToDictionary(g => g.Key, g => g.ToList());
 
             return View(groupedMenu);
         }
 
         [HttpPost]
-        public IActionResult AddToOrder(int menuItemId, int quantity)
+        public async Task<IActionResult> AddToOrder(int menuItemId, int quantity)
         {
+            var menuItem = await _dataService.GetMenuItemAsync(menuItemId);
             var tableNumber = HttpContext.Session.GetInt32("TableNumber") ?? 1;
-            var menuItem = DataService.GetMenuItem(menuItemId);
 
             if (menuItem != null && quantity > 0)
             {
@@ -62,36 +71,50 @@ namespace RestaurantOrderingApp.Controllers
                 HttpContext.Session.SetObjectAsJson("CurrentOrder", orderItems);
             }
 
-            return RedirectToAction("Index");
+            return Redirect($"/Menu/Index?table={tableNumber}");
         }
-        [HttpPost]
-        public IActionResult DeleteOrderItem(int menuItemId)
+        [HttpPost("/Menu/DeleteOrderItem")]
+        public IActionResult DeleteOrderItem(int menuItemId, int quantityToRemove = 1, int? table = null)
         {
+            var tableNumber = table ?? HttpContext.Session.GetInt32("TableNumber") ?? 1;
             var orderItems = HttpContext.Session.GetObjectFromJson<List<OrderItem>>("CurrentOrder") ?? new List<OrderItem>();
+            if (quantityToRemove <= 0)
+            {
+                return RedirectToAction(nameof(ViewOrder), new { table = tableNumber });
+            }
 
             var itemToRemove = orderItems.FirstOrDefault(item => item.MenuItemId == menuItemId);
             if (itemToRemove != null)
             {
-                orderItems.Remove(itemToRemove);
+                itemToRemove.Quantity -= quantityToRemove;
+
+                if (itemToRemove.Quantity <= 0)
+                {
+                    orderItems.Remove(itemToRemove);
+                }
+
                 HttpContext.Session.SetObjectAsJson("CurrentOrder", orderItems);
             }
 
-            return RedirectToAction("ViewOrder");
+            return RedirectToAction(nameof(ViewOrder), new { table = tableNumber });
         }
 
-        public IActionResult ViewOrder()
+        [HttpGet("/Menu/ViewOrder")]
+        public IActionResult ViewOrder(int? table = null)
         {
-            var tableNumber = HttpContext.Session.GetInt32("TableNumber") ?? 1;
+            var tableNumber = table ?? HttpContext.Session.GetInt32("TableNumber") ?? 1;
+            HttpContext.Session.SetInt32("TableNumber", tableNumber);
             var orderItems = HttpContext.Session.GetObjectFromJson<List<OrderItem>>("CurrentOrder") ?? new List<OrderItem>();
 
             ViewBag.TableNumber = tableNumber;
             return View(orderItems);
         }
 
-        [HttpPost]
-        public IActionResult SubmitOrder()
+        [HttpPost("/Menu/SubmitOrder")]
+        public async Task<IActionResult> SubmitOrder(int? table = null)
         {
-            var tableNumber = HttpContext.Session.GetInt32("TableNumber") ?? 1;
+            var tableNumber = table ?? HttpContext.Session.GetInt32("TableNumber") ?? 1;
+            HttpContext.Session.SetInt32("TableNumber", tableNumber);
             var orderItems = HttpContext.Session.GetObjectFromJson<List<OrderItem>>("CurrentOrder") ?? new List<OrderItem>();
 
             if (orderItems.Any())
@@ -102,10 +125,11 @@ namespace RestaurantOrderingApp.Controllers
                     Items = orderItems
                 };
 
-                DataService.AddOrder(order);
+                await _dataService.AddOrderAsync(order);
                 HttpContext.Session.Remove("CurrentOrder");
             }
 
+            ViewBag.TableNumber = tableNumber;
             return View("OrderConfirmed");
         }
     }

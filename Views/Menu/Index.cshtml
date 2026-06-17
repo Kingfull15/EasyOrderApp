@@ -3,36 +3,35 @@
     ViewData["Title"] = "Restaurant Menu - Table " + ViewBag.TableNumber;
 }
 
-<div class="container">
-    <h1 class="text-center mb-4">Welcome to Our Restaurant</h1>
-    <h3 class="text-center mb-4">Table @ViewBag.TableNumber</h3>
+<div class="container menu-page py-4">
+    <div class="menu-hero mb-4">
+        <h1 class="menu-title">Welcome to Our Restaurant</h1>
+        <p class="menu-subtitle mb-0">Fresh flavors, quick service, and easy ordering.</p>
+        <span class="table-pill">Table @ViewBag.TableNumber</span>
+    </div>
 
     <div class="row">
         <div class="col-md-8">
             @foreach (var category in Model)
             {
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h3>@category.Key</h3>
+                <div class="card menu-category-card mb-4">
+                    <div class="card-header menu-category-header">
+                        <h3 class="mb-0">@category.Key</h3>
                     </div>
                     <div class="card-body">
                         @foreach (var item in category.Value)
                         {
-                            <div class="row menu-item mb-3 p-3 border rounded">
+                            <div class="row menu-item-row mb-3 p-3 rounded">
                                 <div class="col-md-8">
-                                    <h5>@item.Name</h5>
-                                    <p class="text-muted">@item.Description</p>
-                                    <strong class="text-success">@item.Price.ToString("F2") Денари</strong>
+                                    <h5 class="menu-item-name">@item.Name</h5>
+                                    <p class="menu-item-description mb-2">@item.Description</p>
+                                    <strong class="menu-item-price">@item.Price.ToString("F2") Денари</strong>
                                 </div>
-                                <div class="col-md-4 text-right">
-                                    <form asp-action="AddToOrder" method="post" class="d-inline">
+                                <div class="col-md-4 menu-item-actions">
+                                    <form asp-controller="Menu" asp-action="AddToOrder" method="post" class="d-inline-flex align-items-center gap-2">
                                         <input type="hidden" name="menuItemId" value="@item.Id" />
-                                        <div class="input-group">
-                                            <input type="number" name="quantity" value="1" min="1" max="10" class="form-control" style="width: 70px;" />
-                                            <div class="input-group-append">
-                                                <button type="submit" class="btn btn-primary">Add to Order</button>
-                                            </div>
-                                        </div>
+                                        <input type="number" name="quantity" value="1" min="1" max="10" class="form-control quantity-input" />
+                                        <button type="submit" class="btn add-order-btn">Add to Order</button>
                                     </form>
                                 </div>
                             </div>
@@ -43,13 +42,13 @@
         </div>
 
         <div class="col-md-4">
-            <div class="card position-sticky" style="top: 20px;">
-                <div class="card-header">
+            <div class="card quick-actions-card position-sticky" style="top: 20px;">
+                <div class="card-header quick-actions-header">
                     <h4>Quick Actions</h4>
                 </div>
                 <div class="card-body">
-                    <a asp-action="ViewOrder" class="btn btn-success btn-block mb-2">View Current Order</a>
-                    <a asp-action="Index" class="btn btn-secondary btn-block">Refresh Menu</a>
+                    <p class="quick-actions-text">Ready to review before submitting? Open your current table order.</p>
+                    <a asp-controller="Menu" asp-action="ViewOrder" asp-route-table="@ViewBag.TableNumber" class="btn view-order-btn btn-block">View Current Order - Table @ViewBag.TableNumber</a>
                 </div>
             </div>
         </div>
